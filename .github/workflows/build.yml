@@ -15,13 +15,23 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Setup Android SDK Environment
-        uses: android-actions/setup-android@v3
-
-      - name: Install NDK, CMake, and Platforms
+      - name: Setup Android SDK and Install NDK/CMake
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-36" "build-tools;35.0.0" "ndk;29.0.14206865" "cmake;3.31.6"
+          # 智能查找 sdkmanager 路径
+          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          else
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
+          fi
+          
+          # 接受所有 SDK 许可
+          yes | $SDKMANAGER --licenses || true
+          
+          # 安装项目所需的组件（去掉了原本导致报错的 "tools"）
+          $SDKMANAGER "platforms;android-36" "build-tools;35.0.0" "ndk;29.0.14206865" "cmake;3.31.6"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
